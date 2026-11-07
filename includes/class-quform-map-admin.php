@@ -292,7 +292,7 @@ class quform_map_admin {
 	}
 
 	/**
-	 * Kommentare für die Datei: [gruppe][feld] => „Bezeichnung (Typ)“.
+	 * Kommentare für die Datei: [gruppe][feld] => „Bezeichnung (Typ)“, [gruppe]['#form'] => Formularname.
 	 *
 	 * @param array $data Zuordnung
 	 * @return array
@@ -302,7 +302,9 @@ class quform_map_admin {
 		if (! count ( $this->get_forms () )) {
 			return $comments;
 		}
+		$forms = $this->get_forms ();
 		foreach ( $data as $key => $group ) {
+			$comments [$key] ['#form'] = isset ( $forms [( int ) $group ['form']] ) ? $forms [( int ) $group ['form']] ['name'] : 'Formular nicht gefunden';
 			foreach ( ( array ) $group ['fields'] as $field => $id ) {
 				$element = $this->find_element ( ( int ) $group ['form'], ( int ) $id );
 				$comments [$key] [$field] = null === $element ? 'nicht im Formular gefunden' : $element ['label'] . ' (' . $element ['type'] . ')';
@@ -362,7 +364,6 @@ class quform_map_admin {
 			$key = strtolower ( sanitize_text_field ( ( string ) ($raw ['key'] ?? '') ) );
 			$row = array (
 					'key' => $key,
-					'label' => sanitize_text_field ( ( string ) ($raw ['label'] ?? '') ),
 					'form' => absint ( $raw ['form'] ?? 0 ),
 					'fields' => array ()
 			);
@@ -400,7 +401,6 @@ class quform_map_admin {
 			$rows [] = $row;
 			if (quform_map::is_valid_key ( $key ) && ! isset ( $data [$key] )) {
 				$data [$key] = array (
-						'label' => $row ['label'],
 						'form' => $row ['form'],
 						'fields' => $fields
 				);
@@ -463,14 +463,11 @@ class quform_map_admin {
 
 		$form_id = absint ( $values ['quform_id'] ?? 0 );
 		$data = quform_map::all ();
-		$forms = $this->get_forms ();
 		$existing = $data [$key] ?? array (
-				'label' => ( string ) ($forms [$form_id] ['name'] ?? ''),
 				'form' => 0,
 				'fields' => array ()
 		);
 		$data [$key] = array (
-				'label' => '' !== $existing ['label'] ? $existing ['label'] : ( string ) ($forms [$form_id] ['name'] ?? ''),
 				'form' => $form_id > 0 ? $form_id : $existing ['form'],
 				'fields' => array_merge ( $existing ['fields'], $fields )
 		);
@@ -563,7 +560,7 @@ class quform_map_admin {
 	/**
 	 * Gruppen für die Anzeige: nach Fehler die Eingaben, sonst aus der Datei.
 	 *
-	 * @return array Liste von {key, label, form, fields: Liste von {key, id}}
+	 * @return array Liste von {key, form, fields: Liste von {key, id}}
 	 */
 	private function rows() {
 		if (null !== $this->posted) {
@@ -580,7 +577,6 @@ class quform_map_admin {
 			}
 			$rows [] = array (
 					'key' => $key,
-					'label' => $group ['label'],
 					'form' => $group ['form'],
 					'fields' => $fields
 			);
@@ -634,7 +630,6 @@ class quform_map_admin {
 		echo '<h2>' . esc_html__ ( 'Neue Gruppe', 'quform_map' ) . '</h2>';
 		echo '<p class="qf-head">';
 		echo '<label>' . esc_html__ ( 'Schlüssel', 'quform_map' ) . ' <input type="text" name="new_group[key]" pattern="[a-z][a-z0-9_]*" placeholder="z. B. anmeldung"></label> ';
-		echo '<label>' . esc_html__ ( 'Bezeichnung', 'quform_map' ) . ' <input type="text" name="new_group[label]"></label> ';
 		echo '<label>' . esc_html__ ( 'Formular', 'quform_map' ) . ' ';
 		$this->render_form_select ( 'new_group[form]', 0, $forms );
 		echo '</label></p>';
@@ -693,7 +688,7 @@ class quform_map_admin {
 	 * Eine Gruppe mit ihren Feldern.
 	 *
 	 * @param string $index Index im Formular
-	 * @param array $row Gruppe {key, label, form, fields}
+	 * @param array $row Gruppe {key, form, fields}
 	 * @param array $forms Formulare
 	 * @return void
 	 */
@@ -708,7 +703,10 @@ class quform_map_admin {
 		}
 
 		echo '<div class="qf-group" data-group="' . esc_attr ( $index ) . '">';
-		echo '<h2>' . esc_html ( '' !== $row ['label'] ? $row ['label'] : $row ['key'] );
+		echo '<h2>' . esc_html ( $row ['key'] );
+		if (isset ( $forms [$form_id] )) {
+			echo ' <span class="qf-form-name">' . esc_html ( '#' . $form_id . ' ' . $forms [$form_id] ['name'] ) . '</span>';
+		}
 		if ($missing) {
 			/* translators: %d: Anzahl */
 			echo ' <span class="qf-badge">' . esc_html ( sprintf ( _n ( '%d Feld nicht im Formular', '%d Felder nicht im Formular', $missing, 'quform_map' ), $missing ) ) . '</span>';
@@ -717,7 +715,6 @@ class quform_map_admin {
 
 		echo '<p class="qf-head">';
 		echo '<label>' . esc_html__ ( 'Schlüssel', 'quform_map' ) . ' <input type="text" name="' . esc_attr ( $base ) . '[key]" value="' . esc_attr ( $row ['key'] ) . '" pattern="[a-z][a-z0-9_]*" required></label> ';
-		echo '<label>' . esc_html__ ( 'Bezeichnung', 'quform_map' ) . ' <input type="text" name="' . esc_attr ( $base ) . '[label]" value="' . esc_attr ( $row ['label'] ) . '"></label> ';
 		echo '<label>' . esc_html__ ( 'Formular', 'quform_map' ) . ' ';
 		$this->render_form_select ( $base . '[form]', $form_id, $forms );
 		echo '</label> ';

@@ -74,3 +74,10 @@
 	background: #f6f7f7;
 	border: 1px solid #dcdcde;
 }
+
+.qf .qf-form-name {
+	margin-left: 0.5em;
+	font-size: 14px;
+	font-weight: 400;
+	color: #646970;
+}

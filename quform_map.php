@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Quform Felder
+ * Plugin Name: Quform MAP
  * Plugin URI: https://github.com/lweruo0/quform_map
  * Description: Pflegt eine zentrale PHP-Datei mit sprechenden Namen für Quform-Formular- und Feld-IDs und stellt sie PHP und JavaScript zur Verfügung.
  * Version: 2026.11.07

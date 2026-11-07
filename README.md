@@ -18,8 +18,7 @@ Inhalt (wird vom Backend erzeugt, darf aber auch von Hand bearbeitet werden):
 ```php
 return array (
 	'anmeldung' => array (
-		'label' => 'Anmeldung',
-		'form' => 5,
+		'form' => 5, // Anmeldung
 		'fields' => array (
 			'vorname' => 12, // Vorname (text)
 			'email' => 14, // E-Mail (email)
@@ -33,7 +32,8 @@ Konstanten. Beim Speichern wird die vorherige Fassung als `quform_map.bak.php` g
 
 ## Backend: Einstellungen → Quform Felder
 
-- **Gruppen** (eine je Formular): Schlüssel, Bezeichnung, Quform-Formular.
+- **Gruppen** (eine je Formular): Schlüssel und Quform-Formular. Der Schlüssel ist der Name, über den
+  der Code die Gruppe anspricht.
 - **Felder**: Schlüssel und das Quform-Element aus einer Auswahl (Bezeichnung, Typ, ID). Beim Wählen
   eines Elements wird ein Schlüssel vorgeschlagen. Felder, deren ID es im Formular nicht (mehr) gibt,
   werden rot markiert.

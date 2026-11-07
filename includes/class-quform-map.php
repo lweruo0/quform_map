@@ -10,8 +10,7 @@
  * <code>
  * return array (
  * 	'anmeldung' => array (
- * 		'label' => 'Anmeldung',
- * 		'form' => 5,
+ * 		'form' => 5, // Anmeldung
  * 		'fields' => array ( 'vorname' => 12, 'name' => 13 ),
  * 	),
  * );
@@ -63,7 +62,7 @@ class quform_map {
 	/**
 	 * Komplette Zuordnung.
 	 *
-	 * @return array<string, array{label: string, form: int, fields: array<string, int>}>
+	 * @return array<string, array{form: int, fields: array<string, int>}>
 	 */
 	public static function all() {
 		if (null === self::$data) {
@@ -96,7 +95,7 @@ class quform_map {
 	 * Eine Gruppe oder null, wenn es sie nicht gibt.
 	 *
 	 * @param string $group Schlüssel der Gruppe, z. B. 'anmeldung'
-	 * @return array{label: string, form: int, fields: array<string, int>}|null
+	 * @return array{form: int, fields: array<string, int>}|null
 	 */
 	public static function group($group) {
 		$all = self::all ();
@@ -272,7 +271,7 @@ class quform_map {
 	 * Bereinigt eine Zuordnung: ungültige Schlüssel und IDs fallen weg, Typen werden vereinheitlicht.
 	 *
 	 * @param array $data Zuordnung
-	 * @return array<string, array{label: string, form: int, fields: array<string, int>}>
+	 * @return array<string, array{form: int, fields: array<string, int>}>
 	 */
 	public static function normalize(array $data) {
 		$out = array ();
@@ -287,7 +286,6 @@ class quform_map {
 				}
 			}
 			$out [$key] = array (
-					'label' => is_scalar ( $g ['label'] ?? '' ) ? trim ( ( string ) ($g ['label'] ?? '') ) : '',
 					'form' => is_numeric ( $g ['form'] ?? 0 ) ? max ( 0, ( int ) $g ['form'] ) : 0,
 					'fields' => $fields
 			);
@@ -328,7 +326,8 @@ class quform_map {
 	 * Erzeugt den PHP-Code der Datei.
 	 *
 	 * @param array $data Zuordnung (wird bereinigt)
-	 * @param array $comments optionale Kommentare je Feld: [gruppe][feld] => Text (z. B. Quform-Bezeichnung)
+	 * @param array $comments optionale Kommentare: [gruppe][feld] => Text (z. B. Quform-Bezeichnung),
+	 *        [gruppe]['#form'] => Text hinter der Formular-ID (z. B. Formularname)
 	 * @return string
 	 */
 	public static function export(array $data, array $comments = array ()) {
@@ -345,8 +344,12 @@ class quform_map {
 		$code .= "return array (\n";
 		foreach ( $data as $key => $g ) {
 			$code .= "\t" . var_export ( $key, true ) . " => array (\n";
-			$code .= "\t\t'label' => " . var_export ( $g ['label'], true ) . ",\n";
-			$code .= "\t\t'form' => " . $g ['form'] . ",\n";
+			$code .= "\t\t'form' => " . $g ['form'] . ',';
+			$comment = self::comment_text ( $comments [$key] ['#form'] ?? '' );
+			if ('' !== $comment) {
+				$code .= ' // ' . $comment;
+			}
+			$code .= "\n";
 			$code .= "\t\t'fields' => array (\n";
 			foreach ( $g ['fields'] as $field => $id ) {
 				$code .= "\t\t\t" . var_export ( $field, true ) . ' => ' . $id . ',';
