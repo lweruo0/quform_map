@@ -727,14 +727,15 @@ class quform_map_admin {
 		echo '<th>' . esc_html__ ( 'Name', 'quform_map' ) . '</th>';
 		echo '<th class="qf-col-del">' . esc_html__ ( 'Löschen', 'quform_map' ) . '</th>';
 		echo '</tr></thead><tbody>';
+		$used = array_map ( 'intval', array_column ( $row ['fields'], 'id' ) );
 		foreach ( $row ['fields'] as $f => $field ) {
-			$this->render_field_row ( $base . '[fields][' . $f . ']', $form_id, $field ['key'], ( int ) $field ['id'], $forms, false );
+			$this->render_field_row ( $base . '[fields][' . $f . ']', $form_id, $field ['key'], ( int ) $field ['id'], $forms, false, $used );
 		}
-		$this->render_field_row ( $base . '[fields][n0]', $form_id, '', 0, $forms, false );
+		$this->render_field_row ( $base . '[fields][n0]', $form_id, '', 0, $forms, false, $used );
 		echo '</tbody></table>';
 
 		echo '<template class="qf-template">';
-		$this->render_field_row ( $base . '[fields][__F__]', $form_id, '', 0, $forms, true );
+		$this->render_field_row ( $base . '[fields][__F__]', $form_id, '', 0, $forms, true, $used );
 		echo '</template>';
 		echo '<p><button type="button" class="button qf-add">' . esc_html__ ( '+ Feld hinzufügen', 'quform_map' ) . '</button></p>';
 		echo '</div>';
@@ -749,9 +750,10 @@ class quform_map_admin {
 	 * @param int $id Element-ID
 	 * @param array $forms Formulare
 	 * @param bool $template Zeile für die Vorlage
+	 * @param int[] $used in der Gruppe zugeordnete Element-IDs; werden nicht angeboten, außer $id selbst
 	 * @return void
 	 */
-	private function render_field_row($base, $form_id, $key, $id, array $forms, $template) {
+	private function render_field_row($base, $form_id, $key, $id, array $forms, $template, array $used = array ()) {
 		$missing = $id > 0 && count ( $forms ) && null === $this->find_element ( $form_id, $id );
 		echo '<tr class="qf-row' . ($missing ? ' qf-missing' : '') . '">';
 		echo '<td><input type="text" class="qf-key" name="' . esc_attr ( $base ) . '[key]" value="' . esc_attr ( $key ) . '" pattern="[a-z][a-z0-9_]*"></td>';
@@ -760,6 +762,9 @@ class quform_map_admin {
 			echo '<select class="qf-element" name="' . esc_attr ( $base ) . '[id]">';
 			echo '<option value="">' . esc_html__ ( '— Feld wählen —', 'quform_map' ) . '</option>';
 			foreach ( ( array ) ($forms [$form_id] ['elements'] ?? array ()) as $element_id => $element ) {
+				if ($element_id !== $id && in_array ( $element_id, $used, true )) {
+					continue;
+				}
 				echo '<option value="' . esc_attr ( ( string ) $element_id ) . '"' . selected ( $id, $element_id, false ) . '>' . esc_html ( '#' . $element_id . ' ' . $element ['label'] . ' (' . $element ['type'] . ')' ) . '</option>';
 			}
 			if ($missing) {
@@ -773,7 +778,7 @@ class quform_map_admin {
 		echo '<td><code class="qf-name">' . esc_html ( $form_id > 0 && $id > 0 ? 'quform_' . $form_id . '_' . $id : '' ) . '</code></td>';
 		echo '<td class="qf-col-del">';
 		if (! $template && '' !== $key) {
-			echo '<input type="checkbox" name="' . esc_attr ( $base ) . '[delete]" value="1">';
+			echo '<input type="checkbox" class="qf-del" name="' . esc_attr ( $base ) . '[delete]" value="1">';
 		}
 		echo '</td></tr>';
 	}
