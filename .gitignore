@@ -1,0 +1,12 @@
+# Abhängigkeiten / Werkzeuge
+vendor/
+composer.lock
+node_modules/
+
+# IDE / System
+.idea/
+.vscode/
+.claude/
+*.code-workspace
+.DS_Store
+Thumbs.db
