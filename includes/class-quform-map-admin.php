@@ -125,7 +125,7 @@ class quform_map_admin {
 	 * @return void
 	 */
 	public function add_page() {
-		$this->hook = ( string ) add_options_page ( __ ( 'Quform Felder', 'quform_map' ), __ ( 'Quform Felder', 'quform_map' ), 'manage_options', self::SLUG, array (
+		$this->hook = ( string ) add_options_page ( __ ( 'Quform Fields', 'quform_map' ), __ ( 'Quform Fields', 'quform_map' ), 'manage_options', self::SLUG, array (
 				$this,
 				'render'
 		) );
@@ -183,7 +183,7 @@ class quform_map_admin {
 		if ('' === $error) {
 			return;
 		}
-		echo '<div class="notice notice-error"><p><strong>Quform Felder:</strong> ' . esc_html ( $error ) . '</p></div>';
+		echo '<div class="notice notice-error"><p><strong>Quform Fields:</strong> ' . esc_html ( $error ) . '</p></div>';
 	}
 
 	/*
@@ -613,14 +613,21 @@ class quform_map_admin {
 			echo '</ul></div>';
 		}
 
-		$this->render_status ( $file, $forms );
+		$this->render_usage ();
 
-		echo '<form method="post" action="' . esc_url ( $this->page_url () ) . '" class="qf-main">';
+		/* data-restore: Auf-/Zuklapp-Zustand aus dem Browser übernehmen (nicht nach einem Fehler) */
+		echo '<form method="post" action="' . esc_url ( $this->page_url () ) . '" class="qf-main"' . (null === $this->posted ? ' data-restore="1"' : '') . '>';
 		wp_nonce_field ( self::NONCE );
 		echo '<input type="hidden" name="qf_action" value="save">';
 
 		if (! count ( $rows )) {
 			echo '<p>' . esc_html__ ( 'Noch keine Gruppen. Lege unten eine an oder importiere die bisherigen Einstellungen.', 'quform_map' ) . '</p>';
+		}
+		if (count ( $rows ) > 1) {
+			echo '<p class="qf-toggle-all">';
+			echo '<button type="button" class="button button-small qf-open-all">' . esc_html__ ( 'Alle aufklappen', 'quform_map' ) . '</button> ';
+			echo '<button type="button" class="button button-small qf-close-all">' . esc_html__ ( 'Alle zuklappen', 'quform_map' ) . '</button>';
+			echo '</p>';
 		}
 		foreach ( $rows as $index => $row ) {
 			$this->render_group ( 'g' . $index, $row, $forms );
@@ -640,48 +647,8 @@ class quform_map_admin {
 		echo '</form>';
 
 		$this->render_import ();
-		$this->render_usage ();
+
 		echo '</div>';
-	}
-
-	/**
-	 * Status der Datei und von Quform.
-	 *
-	 * @param string $file Pfad der Datei
-	 * @param array $forms Formulare
-	 * @return void
-	 */
-	private function render_status($file, array $forms) {
-		echo '<table class="widefat striped qf-status"><tbody>';
-		echo '<tr><th>' . esc_html__ ( 'Datei', 'quform_map' ) . '</th><td><code>' . esc_html ( $file ) . '</code>';
-		if (! defined ( 'QUFORM_MAP_FILE' )) {
-			echo '<br><span class="description">' . esc_html__ ( 'Anderer Ort: in der wp-config.php define( \'QUFORM_MAP_FILE\', \'/pfad/datei.php\' );', 'quform_map' ) . '</span>';
-		}
-		echo '</td></tr>';
-
-		echo '<tr><th>' . esc_html__ ( 'Stand', 'quform_map' ) . '</th><td>';
-		if (is_file ( $file )) {
-			echo esc_html ( wp_date ( 'd.m.Y H:i', ( int ) filemtime ( $file ) ) );
-			$url = wp_nonce_url ( admin_url ( 'admin-post.php?action=quform_map_download' ), 'quform_map_download' );
-			echo ' · <a href="' . esc_url ( $url ) . '">' . esc_html__ ( 'Herunterladen', 'quform_map' ) . '</a>';
-		} else {
-			echo esc_html__ ( 'Noch nicht vorhanden, wird beim ersten Speichern angelegt.', 'quform_map' );
-		}
-		$dir = dirname ( $file );
-		if (! wp_is_writable ( $dir ) || (is_file ( $file ) && ! wp_is_writable ( $file ))) {
-			echo '<br><strong class="qf-bad">' . esc_html__ ( 'Nicht beschreibbar – Speichern ist nicht möglich.', 'quform_map' ) . '</strong>';
-		}
-		echo '</td></tr>';
-
-		echo '<tr><th>Quform</th><td>';
-		if (! function_exists ( 'quform' )) {
-			echo '<strong class="qf-bad">' . esc_html__ ( 'Nicht aktiv – Feld-IDs können nur als Zahl eingegeben werden.', 'quform_map' ) . '</strong>';
-		} else {
-			/* translators: %d: Anzahl Formulare */
-			echo esc_html ( sprintf ( _n ( '%d Formular gefunden', '%d Formulare gefunden', count ( $forms ), 'quform_map' ), count ( $forms ) ) );
-		}
-		echo '</td></tr>';
-		echo '</tbody></table>';
 	}
 
 	/**
@@ -702,30 +669,37 @@ class quform_map_admin {
 			}
 		}
 
-		echo '<div class="qf-group" data-group="' . esc_attr ( $index ) . '">';
-		echo '<h2>' . esc_html ( $row ['key'] );
+		/* Zugeklappt, außer nach einem Fehler beim Speichern oder wenn Felder im Formular fehlen */
+		$open = null !== $this->posted || $missing > 0;
+		echo '<details class="qf-group" data-group="' . esc_attr ( $index ) . '" data-key="' . esc_attr ( $row ['key'] ) . '"' . ($open ? ' open' : '') . '>';
+		echo '<summary><h2>' . esc_html ( $row ['key'] );
 		if (isset ( $forms [$form_id] )) {
 			echo ' <span class="qf-form-name">' . esc_html ( '#' . $form_id . ' ' . $forms [$form_id] ['name'] ) . '</span>';
 		}
+		/* translators: %d: Anzahl Felder */
+		echo ' <span class="qf-count">' . esc_html ( sprintf ( _n ( '%d Feld', '%d Felder', count ( $row ['fields'] ), 'quform_map' ), count ( $row ['fields'] ) ) ) . '</span>';
 		if ($missing) {
 			/* translators: %d: Anzahl */
 			echo ' <span class="qf-badge">' . esc_html ( sprintf ( _n ( '%d Feld nicht im Formular', '%d Felder nicht im Formular', $missing, 'quform_map' ), $missing ) ) . '</span>';
 		}
-		echo '</h2>';
+		echo ' <span class="qf-badge qf-badge-del">' . esc_html__ ( 'wird beim Speichern gelöscht', 'quform_map' ) . '</span>';
+		echo '</h2></summary>';
 
+		echo '<div class="qf-body">';
 		echo '<p class="qf-head">';
 		echo '<label>' . esc_html__ ( 'Schlüssel', 'quform_map' ) . ' <input type="text" name="' . esc_attr ( $base ) . '[key]" value="' . esc_attr ( $row ['key'] ) . '" pattern="[a-z][a-z0-9_]*" required></label> ';
 		echo '<label>' . esc_html__ ( 'Formular', 'quform_map' ) . ' ';
 		$this->render_form_select ( $base . '[form]', $form_id, $forms );
 		echo '</label> ';
-		echo '<label class="qf-delete"><input type="checkbox" name="' . esc_attr ( $base ) . '[delete]" value="1"> ' . esc_html__ ( 'Gruppe löschen', 'quform_map' ) . '</label>';
+		echo '<input type="hidden" class="qf-del" name="' . esc_attr ( $base ) . '[delete]" value="0">';
+		echo '<button type="button" class="button button-link-delete qf-group-del" data-undo="' . esc_attr__ ( 'Löschen rückgängig', 'quform_map' ) . '">' . esc_html__ ( 'Gruppe löschen', 'quform_map' ) . '</button>';
 		echo '</p>';
 
 		echo '<table class="widefat qf-fields"><thead><tr>';
 		echo '<th>' . esc_html__ ( 'Schlüssel', 'quform_map' ) . '</th>';
 		echo '<th>' . esc_html__ ( 'Quform-Feld', 'quform_map' ) . '</th>';
 		echo '<th>' . esc_html__ ( 'Name', 'quform_map' ) . '</th>';
-		echo '<th class="qf-col-del">' . esc_html__ ( 'Löschen', 'quform_map' ) . '</th>';
+		echo '<th class="qf-col-del"><span class="screen-reader-text">' . esc_html__ ( 'Löschen', 'quform_map' ) . '</span></th>';
 		echo '</tr></thead><tbody>';
 		$used = array_map ( 'intval', array_column ( $row ['fields'], 'id' ) );
 		foreach ( $row ['fields'] as $f => $field ) {
@@ -737,8 +711,8 @@ class quform_map_admin {
 		echo '<template class="qf-template">';
 		$this->render_field_row ( $base . '[fields][__F__]', $form_id, '', 0, $forms, true, $used );
 		echo '</template>';
-		echo '<p><button type="button" class="button qf-add">' . esc_html__ ( '+ Feld hinzufügen', 'quform_map' ) . '</button></p>';
-		echo '</div>';
+		echo '<p class="qf-foot"><button type="button" class="button button-small qf-add">' . esc_html__ ( '+ Feld hinzufügen', 'quform_map' ) . '</button></p>';
+		echo '</div></details>';
 	}
 
 	/**
@@ -755,7 +729,8 @@ class quform_map_admin {
 	 */
 	private function render_field_row($base, $form_id, $key, $id, array $forms, $template, array $used = array ()) {
 		$missing = $id > 0 && count ( $forms ) && null === $this->find_element ( $form_id, $id );
-		echo '<tr class="qf-row' . ($missing ? ' qf-missing' : '') . '">';
+		/* data-saved: Zeile steht in der Datei und wird per Markierung gelöscht, neue Zeilen werden entfernt */
+		echo '<tr class="qf-row' . ($missing ? ' qf-missing' : '') . '"' . (! $template && '' !== $key ? ' data-saved="1"' : '') . '>';
 		echo '<td><input type="text" class="qf-key" name="' . esc_attr ( $base ) . '[key]" value="' . esc_attr ( $key ) . '" pattern="[a-z][a-z0-9_]*"></td>';
 		echo '<td>';
 		if (count ( $forms )) {
@@ -777,9 +752,10 @@ class quform_map_admin {
 		echo '</td>';
 		echo '<td><code class="qf-name">' . esc_html ( $form_id > 0 && $id > 0 ? 'quform_' . $form_id . '_' . $id : '' ) . '</code></td>';
 		echo '<td class="qf-col-del">';
-		if (! $template && '' !== $key) {
-			echo '<input type="checkbox" class="qf-del" name="' . esc_attr ( $base ) . '[delete]" value="1">';
-		}
+		echo '<input type="hidden" class="qf-del" name="' . esc_attr ( $base ) . '[delete]" value="0">';
+		echo '<button type="button" class="button button-small qf-row-del" title="' . esc_attr__ ( 'Feld löschen', 'quform_map' ) . '" data-undo="' . esc_attr__ ( 'Löschen rückgängig', 'quform_map' ) . '">';
+		echo '<span class="dashicons dashicons-trash" aria-hidden="true"></span><span class="screen-reader-text">' . esc_html__ ( 'Feld löschen', 'quform_map' ) . '</span>';
+		echo '</button>';
 		echo '</td></tr>';
 	}
 

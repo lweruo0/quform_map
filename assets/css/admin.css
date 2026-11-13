@@ -13,10 +13,14 @@
 
 .qf .qf-group {
 	max-width: 1100px;
-	margin: 0 0 1.5em;
-	padding: 4px 16px 8px;
+	margin: 0 0 8px;
+	padding: 0 12px;
 	background: #fff;
 	border: 1px solid #c3c4c7;
+}
+
+.qf .qf-new {
+	padding: 4px 12px 8px;
 }
 
 .qf .qf-new {
@@ -24,16 +28,122 @@
 }
 
 .qf .qf-group h2 {
-	margin: 0.8em 0 0.4em;
+	margin: 0.6em 0 0.4em;
+	font-size: 1.2em;
+}
+
+/* Zusammenklappbare Gruppen (details/summary) */
+.qf details.qf-group > summary {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+	list-style: none;
+}
+
+.qf details.qf-group > summary::-webkit-details-marker {
+	display: none;
+}
+
+.qf details.qf-group > summary::before {
+	flex: none;
+	margin-right: 6px;
+	font: normal 20px/1 dashicons;
+	color: #646970;
+	content: "\f139";
+}
+
+.qf details.qf-group[open] > summary::before {
+	content: "\f140";
+}
+
+.qf details.qf-group > summary h2 {
+	display: inline;
+	margin: 0;
+	padding: 8px 0;
+}
+
+.qf details.qf-group > summary:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: 2px;
+}
+
+.qf .qf-body {
+	padding-bottom: 8px;
+}
+
+.qf .qf-count {
+	margin-left: 0.5em;
+	font-size: 13px;
+	font-weight: 400;
+	color: #646970;
+}
+
+.qf .qf-toggle-all {
+	margin: 0 0 8px;
+}
+
+.qf .qf-head {
+	margin: 0 0 8px;
 }
 
 .qf .qf-head label {
 	display: inline-block;
-	margin: 0 1em 0.4em 0;
+	margin: 0 1em 4px 0;
 }
 
-.qf .qf-delete {
+.qf .qf-foot {
+	margin: 6px 0 0;
+}
+
+/* Löschen: zum Löschen markierte Zeilen und Gruppen */
+.qf .qf-badge.qf-badge-del {
+	display: none;
+}
+
+.qf .qf-group-deleted .qf-badge.qf-badge-del {
+	display: inline-block;
+}
+
+.qf .qf-group-deleted {
+	background: #fcf0f1;
+	border-color: #d63638;
+}
+
+.qf .qf-group-deleted .qf-fields,
+.qf .qf-group-deleted .qf-foot {
+	opacity: 0.5;
+}
+
+.qf .qf-fields tr.qf-deleted td {
+	background: #fcf0f1;
+}
+
+.qf .qf-fields tr.qf-deleted .qf-key,
+.qf .qf-fields tr.qf-deleted .qf-element,
+.qf .qf-fields tr.qf-deleted .qf-name {
+	text-decoration: line-through;
+	opacity: 0.6;
+}
+
+.qf .qf-row-del {
+	padding: 0 4px;
 	color: #b32d2e;
+	border-color: transparent;
+	background: transparent;
+}
+
+.qf .qf-row-del:hover,
+.qf .qf-row-del:focus {
+	color: #fff;
+	border-color: #d63638;
+	background: #d63638;
+}
+
+.qf .qf-row-del .dashicons {
+	width: 18px;
+	height: 18px;
+	font-size: 18px;
+	line-height: 24px;
 }
 
 .qf .qf-badge {
@@ -59,8 +169,34 @@
 }
 
 .qf .qf-fields .qf-col-del {
-	width: 70px;
+	width: 36px;
 	text-align: center;
+}
+
+/* Kompakte Feldzeilen */
+.qf .qf-fields th,
+.qf .qf-fields td {
+	padding: 2px 8px;
+	vertical-align: middle;
+}
+
+.qf .qf-fields thead th {
+	padding-top: 4px;
+	padding-bottom: 4px;
+}
+
+.qf .qf-fields input[type="text"],
+.qf .qf-fields input[type="number"],
+.qf .qf-fields select {
+	min-height: 26px;
+	padding-top: 0;
+	padding-bottom: 0;
+	line-height: 24px;
+}
+
+.qf .qf-fields .qf-name {
+	padding: 1px 4px;
+	font-size: 12px;
 }
 
 .qf .qf-fields tr.qf-missing td {
@@ -80,4 +216,19 @@
 	font-size: 14px;
 	font-weight: 400;
 	color: #646970;
+}
+
+/* Kompakte Kopfzeile der Gruppen */
+.qf .qf-head input[type="text"],
+.qf .qf-head input[type="number"],
+.qf .qf-head select,
+.qf .qf-head .button {
+	min-height: 30px;
+	padding-top: 0;
+	padding-bottom: 0;
+	line-height: 28px;
+}
+
+.qf .qf-fields .qf-name:empty {
+	display: none;
 }
