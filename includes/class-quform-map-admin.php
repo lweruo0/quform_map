@@ -848,13 +848,12 @@ $wert  = quform_map::entry_value( $entry, 'anmeldung', 'vorname' );
 $form  = quform_map::form_id( 'anmeldung' );              // 5
 add_filter( 'quform_element_valid_' . quform_map::hook_id( 'anmeldung', 'email' ), … );
 
-// Skript registrieren und Daten anhängen
-wp_enqueue_script( 'mein-frontend', … );
-quform_map::localize( 'mein-frontend', 'quformFelder', array( 'anmeldung' ) );
+// Skript mit Abhängigkeit 'quform-map' registrieren (liefert die Variable quformfields)
+wp_enqueue_script( 'mein-frontend', $url, array( 'jquery', quform_map::JS_HANDLE ), $ver, true );
 
 // JavaScript
-jQuery( quformFelder.anmeldung.selectors.vorname ).val();         // '.quform-field-5_12'
-quformFelder.anmeldung.form;                                       // 5
+jQuery( quformfields.anmeldung.selectors.vorname ).val();         // '.quform-field-5_12'
+quformfields.anmeldung.form;                                       // 5
 CODE;
 		echo '<h2>' . esc_html__ ( 'Verwendung', 'quform_map' ) . '</h2>';
 		echo '<pre class="qf-usage">' . esc_html ( $code ) . '</pre>';

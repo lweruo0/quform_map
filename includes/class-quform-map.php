@@ -34,6 +34,16 @@ if (class_exists ( 'quform_map' )) {
 class quform_map {
 
 	/**
+	 * Handle des Skripts, an dem die JS-Daten hängen (ohne eigene Datei).
+	 */
+	const JS_HANDLE = 'quform-map';
+
+	/**
+	 * Name der globalen JS-Variable mit allen Gruppen.
+	 */
+	const JS_OBJECT = 'quformfields';
+
+	/**
 	 * Geladene und bereinigte Zuordnung, null = noch nicht geladen.
 	 *
 	 * @var array|null
@@ -239,21 +249,63 @@ class quform_map {
 	}
 
 	/**
-	 * Hängt die Zuordnung als globale JS-Variable vor ein registriertes Skript.
-	 * Beispiel: quform_map::localize( 'mein-frontend', 'quformFelder', array( 'anmeldung' ) );
-	 * danach in JS: jQuery( quformFelder.anmeldung.selectors.vorname ).val()
+	 * Registriert das Skript-Handle quform_map::JS_HANDLE ohne Datei. Daran hängt einmalig die
+	 * globale JS-Variable quform_map::JS_OBJECT mit allen Gruppen.
 	 *
+	 * Nutzende Skripte geben das Handle als Abhängigkeit an:
+	 * <code>
+	 * wp_register_script( 'mein-frontend', $url, array( 'jquery', quform_map::JS_HANDLE ), $ver, true );
+	 * </code>
+	 * danach in JS: jQuery( quformfields.anmeldung.selectors.vorname ).val()
+	 *
+	 * Wird über wp_enqueue_scripts/admin_enqueue_scripts (Priorität 1) aufgerufen; mehrfacher Aufruf
+	 * ist unschädlich.
+	 *
+	 * @return bool true, wenn das Handle registriert ist
+	 */
+	public static function register_script() {
+		if (wp_script_is ( self::JS_HANDLE, 'registered' )) {
+			return true;
+		}
+		if (! wp_register_script ( self::JS_HANDLE, false, array (), defined ( 'QUFORM_MAP_VERSION' ) ? QUFORM_MAP_VERSION : false, true )) {
+			return false;
+		}
+		$json = wp_json_encode ( ( object ) self::js_data () );
+		return wp_add_inline_script ( self::JS_HANDLE, 'var ' . self::JS_OBJECT . ' = ' . $json . ';' );
+	}
+
+	/**
+	 * Kompatibilität für Plugins, die noch localize() aufrufen: macht quform_map::JS_HANDLE zur
+	 * Abhängigkeit von $handle, statt eine eigene Variable anzulegen. Damit gibt es die Daten nur
+	 * einmal und kein Plugin überschreibt die Variable eines anderen.
+	 *
+	 * Weicht $object_name von quform_map::JS_OBJECT ab, wird zusätzlich ein Alias angelegt
+	 * (var $object_name = quformfields;). $groups wird ignoriert, es sind immer alle Gruppen enthalten.
+	 *
+	 * @deprecated 2026.11.13 quform_map::JS_HANDLE als Abhängigkeit angeben.
 	 * @param string $handle Handle des Skripts (wp_register_script/wp_enqueue_script)
 	 * @param string $object_name Name der JS-Variable
-	 * @param string[]|null $groups nur diese Gruppen, null = alle
+	 * @param string[]|null $groups wird ignoriert
 	 * @return bool
 	 */
-	public static function localize($handle, $object_name = 'quformMap', $groups = null) {
+	public static function localize($handle, $object_name = self::JS_OBJECT, $groups = null) {
 		if (! preg_match ( '/^[A-Za-z_$][A-Za-z0-9_$]*$/', ( string ) $object_name )) {
 			return false;
 		}
-		$json = wp_json_encode ( ( object ) self::js_data ( $groups ) );
-		return wp_add_inline_script ( $handle, 'var ' . $object_name . ' = ' . $json . ';', 'before' );
+		if (! self::register_script ()) {
+			return false;
+		}
+		$script = wp_scripts ()->query ( $handle, 'registered' );
+		if (! $script) {
+			return false;
+		}
+		if (! in_array ( self::JS_HANDLE, $script->deps, true )) {
+			$script->deps [] = self::JS_HANDLE;
+		}
+		if (self::JS_OBJECT !== $object_name) {
+			return wp_add_inline_script ( $handle, 'var ' . $object_name . ' = ' . self::JS_OBJECT . ';', 'before' );
+		}
+		return true;
 	}
 
 	/**

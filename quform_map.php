@@ -3,7 +3,7 @@
  * Plugin Name: Quform MAP
  * Plugin URI: https://github.com/lweruo0/quform_map
  * Description: Pflegt eine zentrale PHP-Datei mit sprechenden Namen für Quform-Formular- und Feld-IDs und stellt sie PHP und JavaScript zur Verfügung.
- * Version: 2026.11.07
+ * Version: 2026.11.13
  * Requires PHP: 8.0
  * Author: Oliver Ruoß
  * License: GPL2
@@ -16,10 +16,14 @@ if (! defined ( 'ABSPATH' )) {
 	exit ();
 }
 
-define ( 'QUFORM_MAP_VERSION', '2026.11.07' );
+define ( 'QUFORM_MAP_VERSION', '2026.11.13' );
 define ( 'QUFORM_MAP_PLUGIN_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/class-quform-map.php';
+
+// JS-Daten einmalig als Handle 'quform-map' bereitstellen (vor den Skripten der nutzenden Plugins).
+add_action ( 'wp_enqueue_scripts', array ( 'quform_map', 'register_script' ), 1 );
+add_action ( 'admin_enqueue_scripts', array ( 'quform_map', 'register_script' ), 1 );
 
 if (is_admin ()) {
 	require_once __DIR__ . '/includes/class-quform-map-admin.php';

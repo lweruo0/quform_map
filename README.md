@@ -63,17 +63,27 @@ Nicht gesetzte Felder liefern `0` bzw. `''` – nie einen Fehler.
 
 ## Verwendung in JavaScript
 
+Das Plugin registriert das Skript-Handle `quform-map` (`quform_map::JS_HANDLE`) ohne eigene Datei.
+Daran hängt einmalig die globale Variable `quformfields` (`quform_map::JS_OBJECT`) mit **allen**
+Gruppen. Nutzende Skripte geben das Handle nur als Abhängigkeit an:
+
 ```php
-wp_enqueue_script( 'mein-frontend', … );
-quform_map::localize( 'mein-frontend', 'quformFelder', array( 'anmeldung' ) );
+wp_enqueue_script( 'mein-frontend', $url, array( 'jquery', quform_map::JS_HANDLE ), $ver, true );
 ```
 
 ```js
-quformFelder.anmeldung.form;                 // 5
-quformFelder.anmeldung.fields.vorname;       // 12
-quformFelder.anmeldung.names.vorname;        // 'quform_5_12'
-jQuery( quformFelder.anmeldung.selectors.vorname ).val();  // '.quform-field-5_12'
+quformfields.anmeldung.form;                 // 5
+quformfields.anmeldung.fields.vorname;       // 12
+quformfields.anmeldung.names.vorname;        // 'quform_5_12'
+jQuery( quformfields.anmeldung.selectors.vorname ).val();  // '.quform-field-5_12'
 ```
+
+WordPress gibt `quformfields` so genau einmal und immer vor dem nutzenden Skript aus. Ist Quform MAP
+nicht aktiv, fehlt die Abhängigkeit und WordPress lädt das nutzende Skript gar nicht.
+
+`quform_map::localize()` ist veraltet, funktioniert aber weiter: Es legt keine eigene Variable mehr an,
+sondern macht `quform-map` zur Abhängigkeit des Skripts (bei abweichendem Namen zusätzlich ein Alias
+`var meinName = quformfields;`). Der Parameter `$groups` wird ignoriert.
 
 ## Ladereihenfolge
 
