@@ -258,6 +258,9 @@ class quform_map {
 	 * </code>
 	 * danach in JS: jQuery( quformfields.anmeldung.selectors.vorname ).val()
 	 *
+	 * Zusätzlich wird die globale Variable ajaxurl (URL von admin-ajax.php) gesetzt, falls sie fehlt –
+	 * WordPress definiert sie nur im Backend.
+	 *
 	 * Wird über wp_enqueue_scripts/admin_enqueue_scripts (Priorität 1) aufgerufen; mehrfacher Aufruf
 	 * ist unschädlich.
 	 *
@@ -271,7 +274,9 @@ class quform_map {
 			return false;
 		}
 		$json = wp_json_encode ( ( object ) self::js_data () );
-		return wp_add_inline_script ( self::JS_HANDLE, 'var ' . self::JS_OBJECT . ' = ' . $json . ';' );
+		// ajaxurl gibt es von WordPress nur im Backend; im Frontend hier einmalig setzen.
+		$ajaxurl = 'var ajaxurl = window.ajaxurl || ' . wp_json_encode ( admin_url ( 'admin-ajax.php' ) ) . ';';
+		return wp_add_inline_script ( self::JS_HANDLE, $ajaxurl . "\n" . 'var ' . self::JS_OBJECT . ' = ' . $json . ';' );
 	}
 
 	/**

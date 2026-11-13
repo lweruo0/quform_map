@@ -78,6 +78,13 @@ quformfields.anmeldung.names.vorname;        // 'quform_5_12'
 jQuery( quformfields.anmeldung.selectors.vorname ).val();  // '.quform-field-5_12'
 ```
 
+Außerdem setzt das Handle die globale Variable `ajaxurl` (URL von `admin-ajax.php`), falls sie noch
+nicht existiert. WordPress definiert sie nur im Backend, so steht sie auch im Frontend zur Verfügung:
+
+```js
+jQuery.post( ajaxurl, { action: 'meine_aktion' } );
+```
+
 WordPress gibt `quformfields` so genau einmal und immer vor dem nutzenden Skript aus. Ist Quform MAP
 nicht aktiv, fehlt die Abhängigkeit und WordPress lädt das nutzende Skript gar nicht.
 
