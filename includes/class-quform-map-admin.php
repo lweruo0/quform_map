@@ -228,7 +228,10 @@ class quform_map_admin {
 	}
 
 	/**
-	 * Sammelt rekursiv alle Felder (keine Container) einer Formular-Konfiguration.
+	 * Sammelt rekursiv die Elemente einer Formular-Konfiguration: alle Felder und zusätzlich
+	 * die Gruppen. Gruppen haben keinen Wert, sind im Frontend aber über
+	 * '.quform-element-<formular>_<id>' ansprechbar, z. B. um einen ganzen Block ein- oder
+	 * auszublenden. Die übrigen Container (page, row, column) bleiben außen vor.
 	 *
 	 * @param array $elements Element-Konfigurationen
 	 * @param array $out Ergebnis id => {label, type}
@@ -248,6 +251,11 @@ class quform_map_admin {
 					if ('' !== $label) {
 						$inner = ('' !== $context ? $context . ' › ' : '') . $label;
 					}
+					$out [( int ) $element ['id']] = array (
+							'label' => ('' !== $label ? $inner
+									: ('' !== $context ? $context . ' › ' : '') . '(' . __ ( 'ohne Bezeichnung', 'quform_map' ) . ')'),
+							'type' => $type
+					);
 				}
 				$this->collect_elements ( ( array ) ($element ['elements'] ?? array ()), $out, $inner );
 				continue;

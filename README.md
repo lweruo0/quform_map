@@ -36,7 +36,8 @@ Konstanten. Beim Speichern wird die vorherige Fassung als `quform_map.bak.php` g
   der Code die Gruppe anspricht.
 - **Felder**: Schlüssel und das Quform-Element aus einer Auswahl (Bezeichnung, Typ, ID). Beim Wählen
   eines Elements wird ein Schlüssel vorgeschlagen. Felder, deren ID es im Formular nicht (mehr) gibt,
-  werden rot markiert.
+  werden rot markiert. Zur Auswahl stehen alle Felder und zusätzlich die **Gruppen** des Formulars
+  (Typ `group`); Seiten, Zeilen und Spalten nicht.
 - **Import** aus bestehenden Optionen, die als Array mit `quform_id` und `id_<feld>` aufgebaut sind (alle
   Optionen mit „quform“ im Namen werden angeboten): `quform_id` wird zum Formular, jedes `id_<feld>` zum
   Feld `<feld>`.
@@ -60,6 +61,14 @@ add_filter( 'quform_element_valid_' . quform_map::hook_id( 'anmeldung', 'email' 
 ```
 
 Nicht gesetzte Felder liefern `0` bzw. `''` – nie einen Fehler.
+
+Gruppen haben keinen Wert: `value()` und `entry_value()` liefern für sie nichts, und `name()` bzw.
+`selector()` ergeben keinen sinnvollen Feldnamen. Eine Gruppe wird über ihre ID angesprochen, im
+Frontend als `.quform-element-<formular>_<id>`, z. B. um einen ganzen Block auszublenden:
+
+```js
+jQuery( '.quform-element-' + quformfields.anmeldung.form + '_' + quformfields.anmeldung.fields.block ).hide();
+```
 
 ## Verwendung in JavaScript
 
